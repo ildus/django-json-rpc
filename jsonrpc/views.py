@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from jsonrpc.site import jsonrpc_site
 from jsonrpc import mochikit
+from django.core.urlresolvers import reverse
 
 
 def browse(request):
@@ -16,3 +17,18 @@ def browse(request):
                               'method_names_str': dumps(
                                   [m['name'] for m in desc['procs']])
                               })
+
+
+def smd(request):
+    def get_args(method):
+        from inspect import getargspec
+        return [a for a in getargspec(method).args if a != "self"]
+
+    smd = {
+        "serviceType": "JSON-RPC",
+        "serviceURL": reverse("jsonrpc_mountpoint"),
+        "methods": []
+    }
+
+    #TODO: write smd handler
+    return HttpResponse(dumps(smd), mimetype="application/json")
