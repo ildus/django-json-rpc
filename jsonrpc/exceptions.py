@@ -5,6 +5,9 @@ except (ImportError, NameError):
     _ = lambda t, *a, **k: t
 
 
+from django.utils.encoding import smart_unicode
+
+
 class Error(Exception):
     """ Error class based on the JSON-RPC 2.0 specs
         http://groups.google.com/group/json-rpc/web/json-rpc-1-2-proposal
@@ -33,7 +36,7 @@ class Error(Exception):
         error = {
             'name': unicode(self.__class__.__name__),
             'code': self.code,
-            'message': "%s: %s" % (unicode(self.__class__.__name__), unicode(self.message)),
+            'message': smart_unicode(self.message),
             'data': self.data}
 
         from django.conf import settings
