@@ -1,6 +1,8 @@
 #coding: utf-8
 
 from django.conf import settings
+from django.utils.translation import gettext as _
+import exceptions
 
 LIMIT = getattr(settings, 'JSONRPC_LIST_MAX_QUANTITY', 50)
 ASC, DESC = 0, 1
@@ -8,6 +10,7 @@ ASC, DESC = 0, 1
 
 def handle_list(request,
                 model=None, queryset=None,
+                collection=None,
                 start=0, limit=LIMIT, direction=ASC,
                 build_obj_struct=None,
                 order_by='id'):
@@ -23,12 +26,24 @@ def handle_list(request,
         qs = model._default_manager.all()
     elif queryset is not None:
         qs = queryset
+    elif collection is not None:
+        qs = collection
     else:
         raise Exception("need model or queryset")
 
-    if direction == DESC:
-        order_by = '-' + order_by
-    qs = qs.order_by(order_by)[start:start + limit]
+    totalcount = 0
+    if not collection:
+        totalcount = qs.count()
+        if isinstance(order_by, basestring):
+            if direction == DESC:
+                order_by = '-' + order_by
+            qs = qs.order_by(order_by)
+        elif isinstance(order_by, (list, tuple)):
+            qs = qs.order_by(*order_by)
+        qs = qs[start:start + limit]
+    else:
+        totalcount = len(qs)
+        qs = qs[start:start + limit]
 
     def build_struct(obj):
         if build_obj_struct:
@@ -39,6 +54,43 @@ def handle_list(request,
 
         return {'id': obj.pk}
 
-    result = {'totalcount': qs.count()}
+    result = {'totalcount': totalcount}
     result['records'] = [build_struct(obj) for obj in qs]
     return result
+
+
+DICT_REQUIRED = _("An empty structure or is not dictionary")
+PARAM_IS_REQUIRED = _("%(param)s is required for this request")
+INVALID_BOOLEAN = _("Invalid boolean value")
+VALUE_ISNT_POSSIBLE = _("The value is not in possible values")
+
+
+def parse_int(struct, param, default=None, possible_values=None):
+    if not struct or not isinstance(struct, dict):
+        raise exceptions.InvalidParamsError(DICT_REQUIRED)
+
+    try:
+        val = int(struct.get(param, default))
+    except:
+        val = default
+
+    if default is None and val is None:
+        raise exceptions.InvalidParamsError
+
+    if possible_values and val not in possible_values:
+        raise exceptions.InvalidParamsError(VALUE_ISNT_POSSIBLE)
+
+    return val
+
+def parse_bool(struct, param, required=True):
+    if not struct or not isinstance(struct, dict):
+        raise exceptions.InvalidParamsError(DICT_REQUIRED)
+
+    val = struct.get(param)
+    if val is None and required:
+        raise exceptions.InvalidParamsError(PARAM_IS_REQUIRED % {'param': param})
+
+    if val not in (True, False, None):
+        raise exceptions.InvalidParamsError(INVALID_BOOLEAN)
+
+    return val

@@ -27,6 +27,8 @@ class Error(Exception):
     def __init__(self, message=None):
         """ Setup the Exception and overwrite the default message """
         if message is not None:
+            if not isinstance(message, basestring):
+                message = str(message)
             self.message = message
 
     @property
@@ -113,5 +115,5 @@ class AuthenticationRequired(Error):
 class OtherError(Error):
     """ catchall error """
     code = 500
-    message = _('Error missed by other execeptions')
+    message = _('Error missed by other exceptions')
     status = 500
