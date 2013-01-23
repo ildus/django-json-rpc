@@ -12,7 +12,7 @@ try:
 except (NameError, ImportError):
     csrf_exempt = empty_dec
 
-from django.core.serializers.json import DjangoJSONEncoder
+from jsonrpc.helpers import RpcJSONEncoder
 
 NoneType = type(None)
 encode_kw = lambda p: dict([(str(k), v) for k, v in p.iteritems()])
@@ -81,7 +81,7 @@ def validate_params(method, D):
 
 class JSONRPCSite(object):
     "A JSON-RPC Site"
-    def __init__(self, json_encoder=DjangoJSONEncoder):
+    def __init__(self, json_encoder=RpcJSONEncoder):
         self.urls = {}
         self.uuid = str(uuid1())
         self.version = '1.0'
@@ -89,7 +89,7 @@ class JSONRPCSite(object):
         self.register('system.describe', self.describe)
         self.set_json_encoder(json_encoder)
 
-    def set_json_encoder(self, json_encoder=DjangoJSONEncoder):
+    def set_json_encoder(self, json_encoder=RpcJSONEncoder):
         self.json_encoder = json_encoder
 
     def register(self, name, method):

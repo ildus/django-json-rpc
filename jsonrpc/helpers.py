@@ -2,6 +2,8 @@
 
 from django.conf import settings
 from django.utils.translation import gettext as _
+from django.core.serializers.json import DjangoJSONEncoder
+from django.utils.functional import Promise
 import exceptions
 
 LIMIT = getattr(settings, 'JSONRPC_LIST_MAX_QUANTITY', 50)
@@ -66,9 +68,6 @@ VALUE_ISNT_POSSIBLE = _("The value is not in possible values")
 
 
 def parse_int(struct, param, default=None, possible_values=None):
-    if not struct or not isinstance(struct, dict):
-        raise exceptions.InvalidParamsError(DICT_REQUIRED)
-
     try:
         val = int(struct.get(param, default))
     except:
@@ -82,10 +81,8 @@ def parse_int(struct, param, default=None, possible_values=None):
 
     return val
 
-def parse_bool(struct, param, required=True):
-    if not struct or not isinstance(struct, dict):
-        raise exceptions.InvalidParamsError(DICT_REQUIRED)
 
+def parse_bool(struct, param, required=True):
     val = struct.get(param)
     if val is None and required:
         raise exceptions.InvalidParamsError(PARAM_IS_REQUIRED % {'param': param})
@@ -94,3 +91,11 @@ def parse_bool(struct, param, required=True):
         raise exceptions.InvalidParamsError(INVALID_BOOLEAN)
 
     return val
+
+
+class RpcJSONEncoder(DjangoJSONEncoder):
+    def default(self, o):
+        if isinstance(o, Promise):
+            return unicode(o)
+        else:
+            return super(RpcJSONEncoder, self).default(o)
