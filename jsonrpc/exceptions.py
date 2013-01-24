@@ -28,7 +28,7 @@ class Error(Exception):
         """ Setup the Exception and overwrite the default message """
         if message is not None:
             if not isinstance(message, basestring):
-                message = str(message)
+                message = unicode(message)
             self.message = message
 
     @property
