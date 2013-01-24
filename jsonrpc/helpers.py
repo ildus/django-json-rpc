@@ -93,6 +93,19 @@ def parse_bool(struct, param, required=True):
     return val
 
 
+def parse_sort(struct, param, ordering_fields, default='id'):
+    sort = struct.get(param)
+    order_by = default
+    if sort and isinstance(sort, basestring):
+        desc = (sort and sort[0] == '-')
+        if desc:
+            sort = sort[1:]
+        if sort and sort in ordering_fields:
+            order_by = '%s%s' % ('-' if desc else '', ordering_fields[sort])
+
+    return order_by
+
+
 class RpcJSONEncoder(DjangoJSONEncoder):
     def default(self, o):
         if isinstance(o, Promise):
