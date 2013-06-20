@@ -100,8 +100,13 @@ def parse_sort(struct, param, ordering_fields, default='id'):
         desc = (sort and sort[0] == '-')
         if desc:
             sort = sort[1:]
+
         if sort and sort in ordering_fields:
-            order_by = '%s%s' % ('-' if desc else '', ordering_fields[sort])
+            db_field = ordering_fields[sort]
+            if isinstance(db_field, basestring):
+                order_by = '%s%s' % ('-' if desc else '', db_field)
+            elif isinstance(db_field, (tuple, list)):
+                order_by = ['%s%s' % ('-' if desc else '', db_field[0])] + list(db_field[1:])
 
     return order_by
 
