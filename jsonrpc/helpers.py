@@ -106,7 +106,10 @@ def parse_sort(struct, param, ordering_fields, default='id'):
             if isinstance(db_field, basestring):
                 order_by = '%s%s' % ('-' if desc else '', db_field)
             elif isinstance(db_field, (tuple, list)):
-                order_by = ['%s%s' % ('-' if desc else '', db_field[0])] + list(db_field[1:])
+                def transform(item):
+                    return '%s%s' % ('-' if desc else '', item)
+
+                order_by = map(transform, db_field)
 
     return order_by
 
